@@ -1,0 +1,12 @@
+# Source
+node_modules
+
+# Build
+/dist
+
+# Output
+*.log
+
+# IDE/OS rubbish.
+/.idea
+*.DS_Store
