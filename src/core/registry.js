@@ -2,8 +2,10 @@ import * as log from 'winston'
 import _ from 'lodash'
 import 'colors'
 
+import {handleYargsError} from '../utils/util'
+
 /**
- * Stores the modules that have been registered.
+ * Stores the modules that have been registered and registers them with yargs.
  */
 class Registry {
 
@@ -14,26 +16,35 @@ class Registry {
   /**
    * Registers a module with the registry.
    *
-   * @param module The module to register.
+   * @param {object|Array.<object>} modules The module or modules to register.
    */
-  register(module) {
-    log.debug(`Registering ${module.name} (${module.id})...`);
-    this.modules[module.id] = module;
+  register(modules) {
+    if (modules && !_.isArray(modules)) {
+      modules = [modules];
+    }
+    if (!modules || !modules.length) {
+      log.debug("No modules provided to register");
+      return;
+    }
+
+    _.each(modules, (module) => {
+      log.debug(`Registering ${module.name} (${module.id})...`);
+      this.modules[module.id] = module;
+    });
   }
 
   /**
    * Registers a module with yargs as a command.
    *
-   * @param module
-   * @param yargs
+   * @param module The module to register as a command.
+   * @param yargs The yargs object to register the module with.
    */
   registerCommand(module, yargs) {
-    yargs.command(module.id, module.description, (yargs, argv) => {
+    yargs.command(module.id, module.description, (yargs) => {
+    }, (argv) => {
       log.debug(`Command ${module.id.cyan} invoked with argv`, argv);
       this.globalArgv = argv;
       this.command(module, yargs, argv);
-
-      this.addOptions(yargs);
     });
 
     // Register aliases.
@@ -42,27 +53,12 @@ class Registry {
   }
 
   /**
-   * Adds default options to yargs.
+   * Registers the methods of a module as actions (yargs subcommands).
    *
-   * @param yargs The yargs object to add options to.
-   * @return The given yargs object.
+   * @param module The module to register the actions of.
+   * @param yargs The yargs object to register the module with.
+   * @param argv The argv object from invoking the module.
    */
-  addOptions(yargs) {
-    return yargs
-      .option('d', {
-        alias: 'debug',
-        'default': false,
-        describe: 'Enable debug logging'
-      })
-      .option('o', {
-        alias: 'offline',
-        'default': false,
-        describe: 'Run tasks in offline mode'
-      })
-      .help('help')
-      .alias('h', 'help');
-  }
-
   command(module, yargs, argv) {
     log.debug("Registering command actions...");
 
@@ -73,18 +69,18 @@ class Registry {
 
     this.registerMethodActions(module, yargs, methodSubCmds);
 
-    yargs.usage(`Usage: $0 ${module.id.cyan} ${'<action>'.magenta}`);
+    yargs
+      .usage(`Usage: $0 ${module.id.cyan} ${'<action>'.magenta}`)
+      .demand(2, 'ERROR: Must provide an action\n'.red)
+      .fail(handleYargsError(yargs));
 
-    const actions = _.keys(yargs.getCommandHandlers());
     const [command, action, ...args] = yargs.argv._;
-    if (action == null || !(_.includes(actions, action))) {
-      throw new Error(`ERROR: Must provide a valid action for ${module.id}\n`.red);
-    }
   }
 
   /**
    * Registers the module's action methods with yargs.
    *
+   * @param {object} module The module to register actions for.
    * @param {object} yargs The yargs object.
    * @param {Object.<string, string>} methodMap A map of method names to register as commands to
    * descriptions of what they do.
@@ -102,7 +98,10 @@ class Registry {
 
     _.each(methodMap, (desc, key) => {
       if (typeof desc === 'string') {
-        yargs.command(key, desc, (yargs, argv) => {
+        log.debug(`Registering action ${key.magenta} on ${module.id.cyan}...`);
+        yargs.command(key, desc, (yargs) => {
+        }, (argv) => {
+          yargs.fail(handleYargsError(yargs));
           module._invoke(key, this._combineArgvs(argv));
         });
       } else {
@@ -127,7 +126,6 @@ class Registry {
     } else {
       log.debug("No _actions field found on handler")
     }
-    //log.debug(`getMethodActions not implemented in ${this.name}`);
     return null;
   }
 
@@ -138,7 +136,7 @@ class Registry {
    * @protected
    */
   _combineArgvs(argv) {
-    return _.merge({}, this.globalArgv || {}, argv || {});
+    return _.merge({}, this.globalArgv, argv);
   }
 
   registerAllCommands(yargs) {

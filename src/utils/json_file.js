@@ -26,7 +26,7 @@ export default class JsonFile {
       this.touch();
       const content = fs.readFileSync(this.path, 'utf-8');
       const json = content ? JSON.parse(content) : {};
-      log.debug(`Contents of ${this.path.magenta}:\n${JSON.stringify(json, null, 2)}`);
+      log.debug(`Contents of ${this.path.magenta}:\n${JSON.stringify(json)}`);
       return json;
     } catch (err) {
       log.error(`Failed to read file ${this.path.magenta}:`, err);

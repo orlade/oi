@@ -25,6 +25,7 @@ export default class Module {
   _invoke(methodName, argv) {
     const [, ...args] = argv._;
     const kwargs = _.pickBy(argv, (p) => p !== '_');
+    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} with args ${args}, ${kwargs}...`);
     return this.runTask(methodName, args.concat([kwargs]));
   }
 

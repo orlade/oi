@@ -2,66 +2,78 @@ import fs from 'fs'
 import _ from 'lodash'
 import * as log from 'winston'
 
+import registry from '../core/registry'
+import PluginScanner from '../core/plugin_scanner'
+import Foo from '../modules/foo'
+
 const yargs = require('yargs');
 
 // Extends the String prototype with color commands.
 import 'colors'
 
 import JsonFile from '../utils/json_file'
-import {loadConfig} from '../utils/util'
+import {loadConfig, handleYargsError} from '../utils/util'
+
+// The path to the directory where global node modules are installed.
+const GLOBAL_NODE_ROOT = '/usr/local/lib/node_modules';
 
 // Follow links and expand parent dirs to find the package.json of this script.
 const packagePath = fs.realpathSync(`${fs.realpathSync(process.argv[1])}/../../package.json`);
 
-// Initialise yargs for command line parsing.
-yargs
-    .usage(`Usage: $0 ${'<command>'.cyan} ${'<action>'.magenta} [options]`)
-    .option('d', {
-      alias: 'debug',
-      'default': false,
-      describe: 'Enable debug logging'
-    })
-    .version(new JsonFile(packagePath).read().version)
-    .alias('v', 'version');
-
-
 // Set up the logger with debug level if requested.
 log.cli();
+const debug = _.includes(process.argv, '-d') || _.includes(process.argv, '--debug');
 // Use require to workaround importing issue (https://github.com/winstonjs/winston/issues/801)
-const earlyArgv = yargs.argv;
-require('winston').level = earlyArgv.debug ? 'debug' : 'info';
+require('winston').level = debug ? 'debug' : 'info';
 log.debug(`Initialised log with level ${log.level}`);
-log.debug(`Received argv: ${JSON.stringify(earlyArgv)}`);
 
-// Register the modules.
-import registry from '../core/registry'
-import Foo from '../modules/foo'
 
-new Foo().register();
-
-// Merge configuration into the yargs properties.
+// Initialise yargs for command line parsing.
 yargs
-    .config('config', loadConfig)
-    .alias('c', 'config')
-    .default('config', '~/.oi');
-
-registry.registerAllCommands(yargs);
+  .usage(`Usage: $0 ${'<command>'.cyan} ${'<action>'.magenta} [options]`)
+  .version(new JsonFile(packagePath).read().version).alias('v', 'version')
+  // Merge configuration into the yargs options.
+  .config('config', loadConfig).alias('c', 'config').default('config', '~/.oi')
+  .option('d', {
+    alias: 'debug',
+    'default': false,
+    describe: 'Enable debug logging'
+  })
+  .fail(handleYargsError(yargs));
 
 // Generate the help after everything is registered.
-yargs
-    .demand(1, 'ERROR: Must provide one of the commands above.\n'.red)
-    .help('help')
-    .alias('h', 'help');
 
-// Commands will be automatically invoked when yargs.argv is calculated.
-// Before triggering them, we take a snapshot of the available commands. After commands are
-// evaluated we use the snapshot to determine if any commands were matched. If not, we can dig a
-// little deeper.
-const argv = yargs.argv;
-const [command, ] = argv._;
-const commands = registry.moduleIds;
-if (!_.includes(commands, command)) {
-  console.log(yargs.help());
-  log.error(`ERROR: Must provide a valid command\n`.red);
-  process.exit(1);
-}
+new PluginScanner(GLOBAL_NODE_ROOT).loadPlugins((err, pluginModules) => {
+  if (err) {
+    log.debug("Failed to load plugins");
+  } else {
+    // Register any loaded plugin modules.
+    registry.register(pluginModules);
+  }
+
+  // Register the sample Foo module.
+  new Foo().register();
+
+  // Register the commands of each module in the registry with yargs.
+  registry.registerAllCommands(yargs);
+
+  yargs
+    .demand(1, 'ERROR: Must provide a command\n'.red).strict()
+    .help('help').alias('h', 'help');
+
+  // Commands will be automatically invoked when yargs.argv is calculated.
+  // Before triggering them, we take a snapshot of the available commands. After commands are
+  // evaluated we use the snapshot to determine if any commands were matched. If not, we can dig a
+  // little deeper.
+  const argv = yargs.argv;
+  const [command, ] = argv._;
+  const commands = registry.moduleIds;
+  log.debug('Command', command);
+  if (!_.includes(commands, command)) {
+    //console.log(yargs.help());
+    //yargs.showHelp();
+    //log.error(`ERROR: Must provide a valid command\n`.red);
+    //process.exit(1);
+  }
+});
+

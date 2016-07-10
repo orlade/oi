@@ -14,7 +14,10 @@ export default {
     shelljs: 'shelljs',
     touch: 'touch',
     winston: 'log$1',
-    lodash: '_'
+    lodash: '_',
+    'universal-mixin': 'universal-mixin',
+    path: 'path',
+    'js-plugins': 'PluginManager'
   },
 
   // Transpile any ES2015 in the output file.

@@ -6,6 +6,8 @@ import _ from 'lodash'
 import 'colors'
 import mixin from 'universal-mixin'
 
+import JsonFile from './json_file'
+
 
 /**
  * Execute a shell command with logging.
@@ -137,13 +139,33 @@ export function expandHome(path) {
 }
 
 export function loadConfig(path) {
-    log.debug(`Reading config from ${path.magenta}...`);
-    let config = new JsonFile(path).read();
-    // TODO(ladeo): Refactor to be more generic.
-    if (config.baseDir) {
-      config.baseDir = expandHome(config.baseDir);
+  log.debug(`Reading config from ${path.magenta}...`);
+  let config = new JsonFile(path).read();
+  // TODO(ladeo): Refactor to be more generic.
+  if (config.baseDir) {
+    config.baseDir = expandHome(config.baseDir);
+  }
+  return config;
+}
+
+/**
+ * Logs error messages, shows usage help and rethrows errors that are caught by yargs.
+ *
+ * @param {object} yargs The yargs object from which to handle errors.
+ */
+export function handleYargsError(yargs) {
+  /**
+   * @param {string} message The message of the failure that occurred.
+   * @param {?Error} err The error that was thrown (if any).
+   */
+  return function (message, err) {
+    console.error(message.red);
+    yargs.showHelp();
+    if (err) {
+      err.stack = err.stack.red;
+      throw err;
     }
-    return config;
+  };
 }
 
 /**
