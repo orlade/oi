@@ -4,9 +4,28 @@ import * as log from 'winston'
 
 import registry from '../core/registry'
 import PluginScanner from '../core/plugin_scanner'
-import Foo from '../modules/foo'
+
+import Oi from '../modules/oi'
+import noi from '../modules/noi'
+import poi from '../modules/poi'
 
 const yargs = require('yargs');
+
+yargs.command({
+  command: 'a',
+  describe: 'a',
+  builder: (y) => y.command({
+    command: 'b',
+    describe: 'b',
+    builder: (yy) => yy.command({
+      command: 'c',
+      describe: 'c',
+      handler: (ca) => console.log(ca)
+    })
+  })
+}).help();
+yargs.argv._;
+//process.exit(0);
 
 // Extends the String prototype with color commands.
 import 'colors'
@@ -28,18 +47,20 @@ require('winston').level = debug ? 'debug' : 'info';
 log.debug(`Initialised log with level ${log.level}`);
 
 
+
 // Initialise yargs for command line parsing.
 yargs
   .usage(`Usage: $0 ${'<command>'.cyan} ${'<action>'.magenta} [options]`)
   .version(new JsonFile(packagePath).read().version).alias('v', 'version')
   // Merge configuration into the yargs options.
-  .config('config', loadConfig).alias('c', 'config').default('config', '~/.oi')
+  .config('config', loadConfig).alias('c', 'config').default('config', '~/.oi/config.json')
   .option('d', {
     alias: 'debug',
     'default': false,
     describe: 'Enable debug logging'
   })
-  .fail(handleYargsError(yargs));
+  .recommendCommands()
+//.fail(handleYargsError(yargs));
 
 // Generate the help after everything is registered.
 
@@ -51,8 +72,10 @@ new PluginScanner(GLOBAL_NODE_ROOT).loadPlugins((err, pluginModules) => {
     registry.register(pluginModules);
   }
 
-  // Register the sample Foo module.
-  new Foo().register();
+  // Register the Oi module.
+  new Oi().register();
+  yargs.command(noi);
+  yargs.command(poi);
 
   // Register the commands of each module in the registry with yargs.
   registry.registerAllCommands(yargs);

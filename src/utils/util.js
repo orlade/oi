@@ -12,7 +12,7 @@ import JsonFile from './json_file'
 /**
  * Execute a shell command with logging.
  *
- * @param {string} command The full comand string to pass to shelljs for execution.
+ * @param {string} command The full command string to pass to shelljs for execution.
  * @param {?object} options The standard shelljs.exec options. Also supports a custom
  * <code>detached</code> option which, if true, will cause the command to be executed on a detached
  * child process via Node.js, allowing the parent process to exit.

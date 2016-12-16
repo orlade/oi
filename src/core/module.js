@@ -13,6 +13,14 @@ export default class Module {
   constructor(id, options) {
     _.merge(this, options, {id});
     _.defaults(this, {name: id})
+
+    //this.command = id + ' [build|foo]';
+    //this.describe = options.description;
+    //this.builder = (yargs) => {
+    //  yargs.command('build');
+    //  return yargs;
+    //}
+    //this.handler = (argv) => console.log("ARGV", argv);
   }
 
   /**
@@ -25,7 +33,7 @@ export default class Module {
   _invoke(methodName, argv) {
     const [, ...args] = argv._;
     const kwargs = _.pickBy(argv, (p) => p !== '_');
-    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} with args ${args}, ${kwargs}...`);
+    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} with args ${args}, ${JSON.stringify(kwargs)}...`);
     return this.runTask(methodName, args.concat([kwargs]));
   }
 
@@ -50,7 +58,7 @@ export default class Module {
     if (this.beforeTask(task, args)) {
       return false;
     }
-    log.debug(`Applying task ${task.magenta} to ${this.name.cyan} ${this}...`);
+    log.debug(`Applying task ${task.magenta} to ${this.name.cyan}...`);
     const result = this[task].apply(this, args);
     // TODO(ladeo): Handle async invocation.
     this.afterTask(task, result);

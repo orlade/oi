@@ -39,7 +39,7 @@ class Registry {
    * @param module The module to register as a command.
    * @param yargs The yargs object to register the module with.
    */
-  registerCommand(module, yargs) {
+  registerCommand(yargs, module) {
     yargs.command(module.id, module.description, (yargs) => {
     }, (argv) => {
       log.debug(`Command ${module.id.cyan} invoked with argv`, argv);
@@ -61,6 +61,13 @@ class Registry {
    */
   command(module, yargs, argv) {
     log.debug("Registering command actions...");
+
+    if (module.command) {
+      console.log("Got a command, sir!");
+      yargs.command(module);
+      yargs.argv._;
+      return;
+    }
 
     let methodSubCmds = this.getMethodActions(module);
     if (!methodSubCmds) {
@@ -140,7 +147,7 @@ class Registry {
   }
 
   registerAllCommands(yargs) {
-    _.each(this.modules, (module) =>  this.registerCommand(module, yargs));
+    _.each(this.modules, this.registerCommand.bind(this, yargs));
   }
 
   get moduleNames() {
