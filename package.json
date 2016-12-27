@@ -21,7 +21,7 @@
     "build": "npm run clean && node_modules/.bin/babel src --out-dir dist && echo 'Build complete'",
     "prepublish": "npm run build",
     "check": "eslint src",
-    "test": "mocha --recursive -R spec --compilers js:babel-core/register",
+    "test": "nyc --cache mocha --recursive -R spec --compilers js:babel-core/register",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "watch": "watch 'npm run build && npm test' ./src ./test",
     "release": "standard-version",
