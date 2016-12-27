@@ -16,12 +16,16 @@
     "dist"
   ],
   "scripts": {
+    "contrib": "ln -s node_modules/angular-precommit/index.js .git/hooks/commit-msg",
     "clean": "rm -rf dist",
     "build": "npm run clean && node_modules/.bin/babel src --out-dir dist && echo 'Build complete'",
-    "upgrade": "npm run build && oi update",
     "prepublish": "npm run build",
+    "check": "eslint src",
     "test": "mocha --recursive -R spec --compilers js:babel-core/register",
-    "watch": "node_modules/.bin/watch 'npm run build && npm test' ./src ./test"
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "watch": "watch 'npm run build && npm test' ./src ./test",
+    "release": "standard-version",
+    "push": "git push --follow-tags origin master && npm publish"
   },
   "dependencies": {
     "colors": "^1.1.2",
@@ -37,11 +41,18 @@
     "yargs": "^6.5.0"
   },
   "devDependencies": {
+    "angular-precommit": "^1.0.3",
     "babel-cli": "^6.18.0",
+    "babel-eslint": "^7.1.1",
     "babel-preset-env": "^1.1.4",
     "chai": "^3.5.0",
+    "coveralls": "^2.11.15",
+    "eslint": "^3.12.2",
+    "eslint-config-google": "^0.7.1",
     "lodash": "^4.17.2",
     "mocha": "^3.2.0",
+    "nyc": "^10.0.0",
+    "standard-version": "^4.0.0",
     "watch": "latest"
   }
 }
