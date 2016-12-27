@@ -7,8 +7,22 @@ module.exports = function (data, host, options) {
     actions: {
       build: {
         describe: "Builds Oi from source",
-        handler: () => console.log('build!!')
+        handler: function (name, options) {
+          oi.utils.exec('npm run build', {workingDir: `${options.workspace}/lib`})
+        }
+      },
+      test: {
+        describe: "Tests the Oi package",
+        handler: function (name, options) {
+          oi.utils.exec('npm test', {workingDir: `${options.workspace}/lib`})
+        }
       }
+    },
+    config: {
+      workspace: '${workspace}/oi'
+    },
+    requireConfig: {
+      workspace: true
     }
   });
 };
