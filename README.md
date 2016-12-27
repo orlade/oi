@@ -1,5 +1,7 @@
 # Oi
 
+[![Build Status](https://travis-ci.org/orlade/oi.svg?branch=develop)](https://travis-ci.org/orlade/oi)
+
 A CLI tool for automating development tasks.
 
 ## Structure
