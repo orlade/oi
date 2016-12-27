@@ -1,6 +1,7 @@
 # http://editorconfig.org
 root = true
 
+# Based on https://google.github.io/styleguide/jsguide.html
 [*]
 indent_style = space
 indent_size = 2

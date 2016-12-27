@@ -33,4 +33,7 @@ the path (relative to the `package.json` file) from which to require the module 
 The only requirement of the exported module itself is that it must be a class, an object, or a
 function that returns either a class or an object.
 
+Note that the path **must include a slash** (e.g. `./index.js` or `/path/to/index.js`) if it refers
+to a file that should be `require`d.
+
 [jsp]: https://github.com/easeway/js-plugins
