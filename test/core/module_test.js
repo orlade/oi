@@ -1,4 +1,4 @@
-import Module from '../src/core/module'
+import Module from '../../src/core/module'
 
 const noop = function () {
 };
