@@ -1,26 +1,29 @@
-import path from 'path'
-import PluginManager from 'js-plugins'
-import _ from 'lodash'
-import * as log from 'winston'
+import path from 'path';
+import PluginManager from 'js-plugins';
+import _ from 'lodash';
+import * as log from 'winston';
 
 const pluginManager = new PluginManager();
 
 /**
- * Overrides the js-plugins scanSubdirs method to also scan the @oi subdir of each given dir.
- * Oi plugins will typically be named @oi/plugin-name to group them and avoid naming conflicts.
- * As such they will be installed into an @oi subdir of their target directory.
+ * Overrides the js-plugins scanSubdirs method to also scan the @oi subdir of
+ * each given dir. Oi plugins will typically be named @oi/plugin-name to group
+ * them and avoid naming conflicts. As such they will be installed into an @oi
+ * subdir of their target directory.
  *
  * @param extraPaths The paths to search in addition to the js-plugins defaults.
  */
 function scanPluginSubdirs(extraPaths) {
   const originalScanSubdirs = pluginManager.scanSubdirs.bind(pluginManager);
 
-  // Replace the scanSubdirs method so that scan() calls our enhanced scanSubdirs instead.
-  pluginManager.scanSubdirs = function (paths) {
+  // Replace the scanSubdirs method so that scan() calls our enhanced
+  // scanSubdirs instead.
+  pluginManager.scanSubdirs = function(paths) {
     // Add the extra paths provided by the PluginScanner.
     paths = paths.concat(extraPaths);
     // Search the @oi subdirectory of each scanned subdir.
-    paths = _.flatMap(paths, (subdirPath) => [subdirPath, path.join(subdirPath, '@oi')]);
+    const oiSubdir = (subdirPath) => [subdirPath, path.join(subdirPath, '@oi')];
+    paths = _.flatMap(paths, oiSubdir);
     log.debug(`Scanning for plugins in ${_.map(paths, 'magenta').join(', ')}`);
     // Delegate back to the original method.
     return originalScanSubdirs(paths);
@@ -39,8 +42,8 @@ export default class PluginScanner {
   /**
    * Creates a new plugin scanner.
    *
-   * @param {?Array.<string>} paths Optional set of paths to search for plugins in addition to the
-   * js-plugin defaults.
+   * @param {?Array.<string>} paths Optional set of paths to search for plugins
+   * in addition to the js-plugin defaults.
    */
   constructor(paths = []) {
     if (paths && !_.isArray(paths)) {
@@ -50,12 +53,13 @@ export default class PluginScanner {
   }
 
   /**
-   * Scans for plugins, creates modules from them, and returns the modules asynchronously via a
-   * callback. The plugins and modules are also saved to fields so they can be accessed later.
+   * Scans for plugins, creates modules from them, and returns the modules
+   * asynchronously via a callback. The plugins and modules are also saved to
+   * fields so they can be accessed later.
    *
-   * @param {function} callback The function to call with the loaded modules. If an error occurred,
-   * the error is the first argument (if not, it's undefined). If successful, the modules are the
-   * second argument.
+   * @param {function} callback The function to call with the loaded modules. If
+   * an error occurred, the error is the first argument (if not, it's
+   * undefined). If successful, the modules are the second argument.
    */
   loadPlugins(callback) {
     scanPluginSubdirs(this.paths);
@@ -68,12 +72,13 @@ export default class PluginScanner {
       }
       this.plugins = plugins;
       if (names && names.length) {
-        log.debug("Discovered plugins:", names);
+        log.debug(`Discovered plugins: [${names.join(', ')}]`);
         this.modules = plugins.map(this.plugModule);
-        log.debug("Created plugin modules:", this.modules.map((m) => m.id));
+        log.debug(`Created plugin modules: `
+          + `[${this.modules.map((m) => m.id).join(', ')}]`);
         callback(null, this.modules);
       } else {
-        log.debug("No plugins discovered");
+        log.debug('No plugins discovered');
         callback(null, []);
       }
     });
@@ -85,19 +90,21 @@ export default class PluginScanner {
    * @param {object} error The error that caused the scan to fail.
    */
   onError(error) {
-    console.error("Plugin scanner error:", error);
+    console.error('Plugin scanner error:', error);
   }
 
   /**
    * Transforms a loaded plugin into a module.
    *
-   * Modules can be exported by plugins in different forms (classes, objects and functions), so this
-   * method does whatever needs to be done to convert a plugin export into a module.
+   * Modules can be exported by plugins in different forms (classes, objects and
+   * functions), so this method does whatever needs to be done to convert a
+   * plugin export into a module.
    *
-   * @param loadedPlugin The exported object of a plugin.
-   * @return The module retrieved from the plugin output.
+   * @param {{}} loadedPlugin The exported object of a plugin.
+   * @returns {{}} The module retrieved from the plugin output.
    */
   plugModule(loadedPlugin) {
+    // Currently all plugins are modules, so this is redundant.
     return loadedPlugin;
   }
 

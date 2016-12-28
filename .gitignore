@@ -2,10 +2,9 @@
 node_modules
 
 # Build
-dist/
-
-# Output
+/dist/
 *.log
+.nyc_output
 
 # IDE/OS rubbish.
 /.idea

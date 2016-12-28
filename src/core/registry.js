@@ -1,15 +1,17 @@
-import * as log from 'winston'
-import _ from 'lodash'
-import 'colors'
+import * as log from 'winston';
+import _ from 'lodash';
+import 'colors';
 
-import Module from 'module'
-import {handleYargsError, fail } from '../utils/util'
+import {fail} from '../utils/util';
 
 /**
  * Stores the modules that have been registered and registers them with yargs.
  */
 class Registry {
 
+  /**
+   * Creates a new registry.
+   */
   constructor() {
     this.modules = {};
   }
@@ -24,7 +26,7 @@ class Registry {
       modules = [modules];
     }
     if (!modules || !modules.length) {
-      log.debug("No modules provided to register");
+      log.debug('No modules provided to register');
       return;
     }
 
@@ -46,24 +48,41 @@ class Registry {
   }
 
   /**
-   * Combines the local argv of a command with whatever global (i.e. parent) argv has been stored.
+   * Combines the local argv of a command with whatever global (i.e. parent)
+   * argv has been stored.
    *
    * @param {?object} argv The local argv output of a child command.
+   * @returns {object} The merged argv object.
    * @protected
    */
   _combineArgvs(argv) {
     return _.merge({}, this.globalArgv, argv);
   }
 
+  /**
+   * Creates a yargs command for each module in the registry.
+   *
+   * @param {object} yargs The yargs instance to register the commands with.
+   */
   registerAllCommands(yargs) {
     log.debug(`Registering all ${_.size(this.modules)} modules...`);
     _.each(this.modules, this.registerCommand.bind(this, yargs));
   }
 
+  /**
+   * Returns the names of all registered modules.
+   *
+   * @return {string[]} The names of the registered modules.
+   */
   get moduleNames() {
     return _.map(this.modules, (v) => v.name);
   }
 
+  /**
+   * Returns the IDs of all registered modules.
+   *
+   * @return {string[]} The IDs of the registered modules.
+   */
   get moduleIds() {
     return _.keys(this.modules);
   }

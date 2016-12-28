@@ -1,9 +1,9 @@
-import 'colors'
-import registry from './registry'
-import * as log from 'winston'
-import _ from 'lodash'
-import moment from 'moment'
-import {reportResult, getAllPublicPropertyNames} from '../utils/util'
+import 'colors';
+import registry from './registry';
+import * as log from 'winston';
+import _ from 'lodash';
+import moment from 'moment';
+import {reportResult, getAllPublicPropertyNames} from '../utils/util';
 
 /**
  * Regular expression pattern matching ${configurationPlaceholder} strings.
@@ -12,8 +12,8 @@ import {reportResult, getAllPublicPropertyNames} from '../utils/util'
 const PLACEHOLDER_REGEX = /\$\{([^}]+)\}/g;
 
 /**
- * A module maps a name onto a collection of actions, and registers itself with Oi to list the
- * available actions.
+ * A module maps a name onto a collection of actions, and registers itself with
+ * Oi to list the available actions.
  */
 export default class Module {
 
@@ -24,11 +24,12 @@ export default class Module {
    */
   constructor(options) {
     if (!options.command) {
-      throw("Module must be created with a command");
+      throw Error('Module must be created with a command');
     }
-    var id = options.command;
+    const id = options.command;
 
-    log.debug(`Initializing module ${id.cyan} with ${JSON.stringify(options)}...`);
+    const optionsJson = JSON.stringify(_.without(options, 'parent'));
+    log.debug(`Initializing module ${id.cyan} with ${optionsJson}...`);
     _.merge(this, options, {id});
     _.defaults(this, {
       name: id,
@@ -42,65 +43,73 @@ export default class Module {
       log.debug(`Decorating handler to be invoked with module hooks...`);
       const host = this.parent || this;
       if (this.command in host) {
-        throw Error(`Command cannot shadow Module property ${this.command} (for now)`);
+        throw Error(`Command cannot shadow Module property ${this.command}`);
       }
 
       host[this.command] = this._decorateHandlerConfig(this.handler);
       this.handler = host._invoke.bind(host, this.command);
     } else {
-      const methodNames = _.without(getAllPublicPropertyNames(options), 'command', 'describe');
+      const publicProps = getAllPublicPropertyNames(options);
+      const methodNames = _.without(publicProps, 'command', 'describe');
       if (!methodNames.length) {
-        throw Error("No actions, handler or methods to use as subcommands")
+        throw Error('No actions, handler or methods to use as subcommands');
       }
-      log.debug(`No actions or handler, binding ${methodNames.length} methods as subcommands (${methodNames.join(', ')})...`);
+      log.debug(`No actions or handler, binding ${methodNames.length} `
+        + `methods as subcommands (${methodNames.join(', ')})...`);
       this.actions = _.zipObject(methodNames, methodNames.map((command) => ({
         command,
         describe: `Performs ${command}`,
-        handler: this._invoke.bind(this, command)
+        handler: this._invoke.bind(this, command),
       })));
       this.builder = this._builder.bind(this);
     }
   }
 
   /**
-   * Evaluates the final value of an option in the module's local configuration. If the local
-   * configuration values contain ${placeholder} strings, they are replaced with the named values
-   * from the parent/global configuration.
+   * Evaluates the final value of an option in the module's local configuration.
+   * If the local configuration values contain ${placeholder} strings, they are
+   * replaced with the named values from the parent/global configuration.
    *
    * @param {object} options The configuration object.
-   * @param {string} key The key to update in options with values from local configuration (if
-   * available).
-   * @return {string} The updated value if substitutions were applied, or the original value if
-   * there were no changes to be made.
+   * @param {string} key The key to update in options with values from local
+   * configuration (if available).
+   * @return {string} The updated value if substitutions were applied, or the
+   * original value if there were no changes to be made.
+   * @protected
    */
   _substituteConfig(options, key) {
     if (!this.config || !(key in this.config)) return options[key];
 
     const value = this.config[key];
     if (typeof value !== 'string') {
-      log.debug(`Substitution into non-string variable ${key.cyan} not supported (yet)`);
+      log.debug(`Substituting non-string variable ${key.cyan} not supported`);
       return options[key];
     }
 
     const newValue = value.replace(PLACEHOLDER_REGEX, (_, key) => options[key]);
     if (newValue !== value) {
-      log.debug(`Replacing ${this.command} config ${key.cyan}: ${value} => ${newValue}`);
+      log.debug(`Replacing ${this.command} config ${key.cyan}: `
+        + `${value} => ${newValue}`);
     }
     return newValue;
   }
 
   /**
-   * Decorates a handler function with logic to substitute global/parent configuration values into
-   * local configuration placeholders before running.
+   * Decorates a handler function with logic to substitute global/parent conf
+   * guration values into local configuration placeholders before running.
    *
    * @param {Function} handler The handler function to decorate.
-   * @return {Function} The decorated handler function. This should be used the same as if it had
-   * not been decorated.
+   * @return {Function} The decorated handler function. This should be used the
+   * same as if it had not been decorated.
+   * @protected
    */
   _decorateHandlerConfig(handler) {
-    return function (name, options) {
+    return (name, options) => {
       const substitute = (value, key) => this._substituteConfig(options, key);
-      options = _.merge(_.mapValues(options, substitute), _.mapValues(this.config, substitute));
+      options = _.merge(
+        _.mapValues(options, substitute),
+        _.mapValues(this.config, substitute)
+      );
       return handler.call(this, name, options);
     };
   }
@@ -109,8 +118,9 @@ export default class Module {
    * Yargs builder function.
    *
    * @param yargs
-   * @param {Object[]} actions Optional list of actions. Defaults to this.actions.
-   * @private
+   * @param {Object[]} actions Optional list of actions. Defaults to
+   * this.actions.
+   * @protected
    */
   _builder(yargs, actions) {
     actions = actions || this.actions;
@@ -123,28 +133,37 @@ export default class Module {
    * Creates a Module for a subcommand of this module.
    *
    * @param {string} subcommand
-   * @private
+   * @protected
    */
   _buildSubmodule(subcommand) {
-    return new Module(_.merge({command: subcommand}, {parent: this}, this.actions[subcommand]));
+    return new Module(_.merge(
+      {command: subcommand},
+      {parent: this},
+      this.actions[subcommand]
+    ));
   }
 
   /**
    * Invokes a method with some scaffolding.
    *
-   * @param {string} methodName The name of the method on the task runner to invoke.
-   * @param {object} argv The command line arguments parsed by yargs, to be applied to the method.
+   * @param {string} methodName The name of the method on the task runner to
+   * invoke.
+   * @param {object} argv The command line arguments parsed by yargs, to be
+   * applied to the method.
+   * @return {string} The result of running the task.
    * @protected
    */
   _invoke(methodName, argv) {
     const [, ...args] = argv._;
     const kwargs = _.pickBy(argv, (p) => p !== '_');
-    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} with args ${args}, ${JSON.stringify(kwargs)}...`);
+    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} `
+      + `with args ${args}, ${JSON.stringify(kwargs)}...`);
     return this.runTask(methodName, args.concat([kwargs]));
   }
 
   /**
-   * Hook that runs before a task method is run when invoked through the runTask method.
+   * Hook that runs before a task method is run when invoked through the runTask
+   * method.
    *
    * @param task The name of the task being run.
    * @param args The arguments to be passed to the method.
@@ -154,7 +173,8 @@ export default class Module {
   }
 
   /**
-   * Runs a task (by method name or function) between the before and after hooks.
+   * Runs a task (by method name or function) between the before and after
+   * hooks.
    *
    * @param {string|function} task The task to run.
    * @param {?Array.<object>} args The arguments to apply to the task.
@@ -165,18 +185,20 @@ export default class Module {
       return false;
     }
     log.debug(`Applying task ${task.magenta} to ${this.name.cyan}...`);
-    const result = this[task].apply(this, args);
+    const result = this[task](...args);
     // TODO(ladeo): Handle async invocation.
     this.afterTask(task, result);
     return result;
   }
 
   /**
-   * Hook that runs after the completion of a task run through the runTask method.
+   * Hook that runs after the completion of a task run through the runTask
+   * method.
    *
    * @param task The name of the task that just finished running.
    * @param result The output of the completed task.
-   * @return {*} Some output object that can be used to determine the success of the task.
+   * @return {*} Some output object that can be used to determine the success of
+   * the task.
    */
   afterTask(task, result) {
     return this._report(task, result);

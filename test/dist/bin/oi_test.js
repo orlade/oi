@@ -1,4 +1,6 @@
-import {exec} from '../../src/utils/util'
+/* global describe, it */
+
+import {exec} from '../../../src/utils/util'
 
 describe("Oi CLI", () => {
 
