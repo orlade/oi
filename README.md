@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/orlade/oi.svg?branch=develop)](https://travis-ci.org/orlade/oi)
 [![Coverage Status](https://coveralls.io/repos/github/orlade/oi/badge.svg?branch=develop)](https://coveralls.io/github/orlade/oi?branch=develop)
+[![NPM Version][https://img.shields.io/npm/v/@oi/oi.svg]][https://www.npmjs.com/package/@oi/oi]
 
 A CLI tool for automating development tasks.
 
