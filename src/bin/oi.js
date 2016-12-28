@@ -18,7 +18,6 @@ const GLOBAL_NODE_ROOT = process.execPath
 // Follow links and expand parent dirs to find the package.json of this script.
 const binDir = path.dirname(fs.realpathSync(process.argv[1]));
 const packagePath = fs.realpathSync(`${binDir}/../../package.json`);
-console.log(packagePath, new JsonFile(packagePath).read().version);
 
 const includes = (arr, x) => arr.indexOf(x) !== -1;
 
