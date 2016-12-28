@@ -40,4 +40,10 @@ function that returns either a class or an object.
 Note that the path **must include a slash** (e.g. `./index.js` or `/path/to/index.js`) if it refers
 to a file that should be `require`d.
 
+### Oi Plugin Examples
+
+ - [`oi-oi`](https://github.com/orlade/oi-oi): CLI for development tasks on Oi itself.
+ - [`oi-sysl`](https://github.com/orlade/oi-sysl): CLI for running
+   [Sysl](https://github.com/ANZ-bank/Sysl) tasks.
+
 [jsp]: https://github.com/easeway/js-plugins
