@@ -1,25 +1,32 @@
-import {exec as _exec, env, pwd, cd} from 'shelljs'
-import {spawn} from 'child_process'
-import expandHomeDir from 'expand-home-dir'
-import * as log from 'winston'
-import _ from 'lodash'
-import 'colors'
-import mixin from 'universal-mixin'
+'use strict';
 
-import JsonFile from './json_file'
+import {exec as _exec, env, pwd, cd} from 'shelljs';
+import {spawn} from 'child_process';
+import expandHomeDir from 'expand-home-dir';
+import * as log from 'winston';
+import _ from 'lodash';
+import 'colors';
+import mixin from 'universal-mixin';
+
+import JsonFile from './json_file';
 
 
 /**
  * Execute a shell command with logging.
  *
- * @param {string} command The full command string to pass to shelljs for execution.
- * @param {?object} options The standard shelljs.exec options. Also supports a custom
- * <code>detached</code> option which, if true, will cause the command to be executed on a detached
- * child process via Node.js, allowing the parent process to exit.
- * @param {?function} callback A callback to invoke when an asynchronous (attached) process exits.
+ * @param {string} command The full command string to pass to shelljs for
+ * execution.
+ * @param {?object} options The standard shelljs.exec options. Also supports a
+ * custom <code>detached</code> option which, if true, will cause the command to
+ * be executed on a detached child process via Node.js, allowing the parent
+ * process to exit.
+ * @param {?function} callback A callback to invoke when an asynchronous
+ * (attached) process exits.
+ * @returns {string} The result of the execution.
  */
 export function exec(command, options = {}, callback = null) {
-  let message = `Executing ${command.cyan} in ${(expandHome(options.workingDir) || pwd()).magenta}`;
+  const execDir = expandHome(options.workingDir) || pwd();
+  let message = `Executing ${command.cyan} in ${execDir.magenta}`;
   if (options) {
     if (typeof options === 'object') {
       message += ` with options ${JSON.stringify(options).magenta}`;
@@ -30,7 +37,8 @@ export function exec(command, options = {}, callback = null) {
   }
   log.debug(`${message}...`);
 
-  // Colors may not appear in stdout. See https://github.com/shelljs/shelljs/issues/86.
+  // Colors may not appear in stdout.
+  // See https://github.com/shelljs/shelljs/issues/86.
   const doExec = () => {
     if (!options.detached) {
       return _exec(command, options, callback);
@@ -38,18 +46,23 @@ export function exec(command, options = {}, callback = null) {
 
     log.debug('Spawning detached child process...');
     const [main, ...args] = command.split(' ');
-    const result = spawn(main, args, {detached: true, stdio: ['ignore', 'ignore', 'ignore']});
+    const result = spawn(main, args, {
+      detached: true,
+      stdio: ['ignore', 'ignore', 'ignore'],
+    });
     result.unref();
     return result;
   };
-  const result = execIn(doExec, options.workingDir);
+  const result = invokeIn(doExec, options.workingDir);
 
   if (result) {
     if (result.code) {
-      log.error(`Command`.red, command.cyan, `exited with code ${result.code}`.red);
+      log.error(`Command`.red, command.cyan,
+        `exited with code ${result.code}`.red);
       log.error(result.output);
     } else if (/warning\:?\]?/i.test(result.output)) {
-      log.warn(`Command`.yellow, command.cyan, `completed with warnings`.yellow);
+      log.warn(`Command`.yellow, command.cyan,
+        `completed with warnings`.yellow);
     }
   }
   return result;
@@ -59,10 +72,12 @@ export function exec(command, options = {}, callback = null) {
  * Invokes a function within a given working directory.
  *
  * @param {function} func The function to invoke.
- * @param {?string} workingDir The directory to be in when executing the function. If not provided,
- * the function will be invoked in the current directory.
+ * @param {?string} workingDir The directory to be in when executing the
+ * function. If not provided, the function will be invoked in the current
+ * directory.
+ * @returns {*} The result of invoking the function.
  */
-function execIn(func, workingDir) {
+function invokeIn(func, workingDir) {
   const currentDir = process.cwd();
   if (!workingDir || workingDir === currentDir) {
     return func();
@@ -93,11 +108,13 @@ export function commafy(items, color) {
 }
 
 /**
- * Converts multi-line CLI output into an array of values (one per line), or null if the output is
+ * Converts multi-line CLI output into an array of values (one per line), or
+ * null if the output is
  * just whitespace.
  *
  * @param {string} string The output string to convert.
- * @returns {?Array<string>} An array of the lines of output, or null if th ere is no output.
+ * @returns {?Array<string>} An array of the lines of output, or null if there
+ * is no output.
  */
 export function arrayifyOutput(string) {
   string = string.trim();
@@ -108,11 +125,12 @@ export function arrayifyOutput(string) {
 }
 
 /**
- * Substitutes any environment variables in string with values in the environment.
+ * Substitutes any environment variables in string with values in the
+ * environment.
  *
  * @param string The string in which to replace environment variable references.
- * @param extraEnv An optional map of additional environment variables to merge into the current
- * environment.
+ * @param extraEnv An optional map of additional environment variables to merge
+ * into the current environment.
  */
 export function substituteEnv(string, extraEnv = {}) {
   const allEnv = _.merge({}, env, extraEnv);
@@ -120,7 +138,8 @@ export function substituteEnv(string, extraEnv = {}) {
 }
 
 /**
- * Logs the outcome of executing a command based on the result object it returns.
+ * Logs the outcome of executing a command based on the result object it
+ * returns.
  *
  * @param {string} task The name of the task being run.
  * @param {object} result The result object from <code>shelljs.exec</code>.
@@ -129,7 +148,8 @@ export function substituteEnv(string, extraEnv = {}) {
 export function reportResult(task, result, time, {info = false} = {}) {
   const timeStr = `(${time.asSeconds()} secs)`;
   if (determineSuccess(result)) {
-    log[info ? 'info' : 'debug'](`${task} completed successfully ${timeStr}`.green);
+    const logger = log[info ? 'info' : 'debug'];
+    logger(`${task} completed successfully ${timeStr}`.green);
   } else {
     let message = `${task} failed`;
     if (result) {
@@ -149,7 +169,8 @@ export function reportResult(task, result, time, {info = false} = {}) {
  * @returns {boolean} True if successful, false otherwise.
  */
 export function determineSuccess(result) {
-  return !(result === false || (result != null && typeof result === 'object' && result.code));
+  return !(result === false
+  || (result != null && typeof result === 'object' && result.code));
 }
 
 /**
@@ -163,6 +184,11 @@ export function expandHome(path) {
   return match ? expandHomeDir(match[1]) : path;
 }
 
+/**
+ * Loads the content of a JSON file from a path.
+ * @param {string} path The path to the JSON file to load. May include ~.
+ * @return {object} The content of the JSON file as a JS object.
+ */
 export function loadConfig(path) {
   log.debug(`Reading config from ${path.magenta}...`);
   let config = new JsonFile(path).read();
@@ -174,7 +200,8 @@ export function loadConfig(path) {
 }
 
 /**
- * Logs error messages, shows usage help and rethrows errors that are caught by yargs.
+ * Logs error messages, shows usage help and rethrows errors that are caught by
+ * yargs.
  *
  * @param {object} yargs The yargs object from which to handle errors.
  */
@@ -183,7 +210,7 @@ export function handleYargsError(yargs) {
    * @param {string} message The message of the failure that occurred.
    * @param {?Error} err The error that was thrown (if any).
    */
-  return function (message, err) {
+  return function(message, err) {
     console.error(message.red);
     yargs.showHelp();
     if (err) {
@@ -212,18 +239,18 @@ export function fail(msg, err, yargs) {
     let stack = new Error().stack;
     console.error(stack.substr(stack.indexOf('\n') + 1).red);
   }
-  process.exit(1)
+  process.exit(1);
 }
 
 /**
- * Gets the names of all properties, both enumerable and non-enumerable, own and inherited, of the
- * object.
+ * Gets the names of all properties, both enumerable and non-enumerable, own and
+ * inherited, of the object.
  *
  * @param obj
  * @returns {string[]}
  */
 export function getAllPropertyNames(obj) {
-  var props = [];
+  let props = [];
   do {
     props = props.concat(Object.getOwnPropertyNames(obj));
   } while (obj = Object.getPrototypeOf(obj));
@@ -232,32 +259,35 @@ export function getAllPropertyNames(obj) {
 }
 
 /**
- * Gets the names of all properties, both enumerable and non-enumerable, own and inherited, that
- * don't begin with an underscore.
+ * Gets the names of all properties, both enumerable and non-enumerable, own and
+ * inherited, that don't begin with an underscore.
  *
  * @param obj
  * @returns {string[]}
  */
 export function getAllPublicPropertyNames(obj) {
   const BASE_NAMES = _.zipObject(Object.getOwnPropertyNames(Object.prototype));
-  var props = [];
+  const isPublic = (name) => !name.startsWith('_') && !(name in BASE_NAMES);
+  let props = [];
   do {
     const names = Object.getOwnPropertyNames(obj);
     if (names === BASE_NAMES) {
       break;
     }
-    props = props.concat(names.filter((name) => !name.startsWith('_') && !(name in BASE_NAMES)));
+    props = props.concat(names.filter(isPublic));
   } while (obj = Object.getPrototypeOf(obj));
 
   return _.uniq(props);
 }
 
 /**
- * Gets the names of all properties of an object, both enumerable and non-enumerable, own and
- * inherited, that make it different from some other object.
+ * Gets the names of all properties of an object, both enumerable and
+ * non-enumerable, own and inherited, that make it different from some other
+ * object.
  *
  * @param {object} obj The object to get the unique property names of.
- * @param {?object} other The object to compare the input's properties to to determine uniqueness.
+ * @param {?object} other The object to compare the input's properties to to
+ * determine uniqueness.
  * @returns {string[]}
  */
 export function getAllUniquePropertyNames(obj, other) {
@@ -268,20 +298,20 @@ export function getAllUniquePropertyNames(obj, other) {
 /**
  * Creates a mixin function from a class.
  *
- * @param {object} SourceClass
- * @returns {Function}
+ * @param {object} SourceClass The class to turn into a mixin function.
+ * @returns {Function} The class as a mixin function.
  */
 export function mixinClass(SourceClass) {
-  return function (options = {}) {
+  return function(options = {}) {
     options.skipInit = true;
     const obj = new SourceClass(options);
     let behavior = {};
-    _.each(getAllUniquePropertyNames(obj, {}), (key) => {
-      behavior[key] = obj[key];
-    });
-    return function (target) {
-      log.debug(`Mixing behaviour of ${SourceClass.name} into ${target.name}...`);
+    const uniqueNames = getAllUniquePropertyNames(obj, {});
+    _.each(uniqueNames, (key) => behavior[key] = obj[key]);
+    return function(target) {
+      log.debug(`Mixing behaviour of ${SourceClass.name} `
+        + `into ${target.name}...`);
       return mixin(behavior)(target);
-    }
-  }
+    };
+  };
 }
