@@ -1,6 +1,7 @@
 # Oi
 
 [![Build Status](https://travis-ci.org/orlade/oi.svg?branch=develop)](https://travis-ci.org/orlade/oi)
+[![Coverage Status](https://coveralls.io/repos/github/orlade/oi/badge.svg?branch=develop)](https://coveralls.io/github/orlade/oi?branch=develop)
 
 A CLI tool for automating development tasks.
 
