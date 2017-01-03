@@ -3,7 +3,8 @@ import registry from './registry';
 import * as log from 'winston';
 import _ from 'lodash';
 import moment from 'moment';
-import {reportResult, getAllPublicPropertyNames} from '../utils/util';
+import {reportResult, getAllPublicPropertyNames, expandHome}
+  from '../utils/util';
 
 /**
  * Regular expression pattern matching ${configurationPlaceholder} strings.
@@ -28,14 +29,18 @@ export default class Module {
     }
     const id = options.command;
 
-    const optionsJson = JSON.stringify(_.without(options, 'parent'));
+    const optionsJson = JSON.stringify(_.omit(options, 'parent'));
     log.debug(`Initializing module ${id.cyan} with ${optionsJson}...`);
+    this.options = options;
     _.merge(this, options, {id});
     _.defaults(this, {
       name: id,
       command: id,
       describe: this.describe || this.description || `Perform ${id}`,
+      config: {},
     });
+    // Inherit the parent module's config.
+    this.parent && _.merge(this.config, this.parent.config);
 
     if (this.actions) {
       this.builder = this._builder.bind(this);
@@ -86,9 +91,10 @@ export default class Module {
       return options[key];
     }
 
-    const newValue = value.replace(PLACEHOLDER_REGEX, (_, key) => options[key]);
+    const newValue = expandHome(
+      value.replace(PLACEHOLDER_REGEX, (_, key) => options[key]));
     if (newValue !== value) {
-      log.debug(`Replacing ${this.command} config ${key.cyan}: `
+      log.debug(`Substituting ${this.command} config ${key.cyan}: `
         + `${value} => ${newValue}`);
     }
     return newValue;
@@ -126,7 +132,7 @@ export default class Module {
     actions = actions || this.actions;
     log.debug(`Building subcommands [${_.keys(actions).join(', ')}]...`);
     _.keys(actions).map(this._buildSubmodule, this).forEach(yargs.command);
-    this.handler || yargs.demand(1).strict();
+    this.handler || yargs.demandCommand(1).strict();
   }
 
   /**
@@ -136,9 +142,13 @@ export default class Module {
    * @protected
    */
   _buildSubmodule(subcommand) {
-    return new Module(_.merge(
-      {command: subcommand},
-      {parent: this},
+    return new Module(_.merge({
+        command: subcommand,
+        parent: this,
+        config: this.config,
+        requireConfig: this.requireConfig,
+        requireTools: this.requireTools,
+      },
       this.actions[subcommand]
     ));
   }

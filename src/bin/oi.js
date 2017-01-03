@@ -10,15 +10,6 @@ import registry from '../core/registry';
 import JsonFile from '../utils/json_file';
 import * as utils from '../utils/util';
 
-
-// The path to the directory where global node modules are installed.
-const GLOBAL_NODE_ROOT = process.execPath
-  .replace(/bin\/node$/, 'lib/node_modules');
-
-// Follow links and expand parent dirs to find the package.json of this script.
-const binDir = path.dirname(fs.realpathSync(process.argv[1]));
-const packagePath = fs.realpathSync(`${binDir}/../../package.json`);
-
 const includes = (arr, x) => arr.indexOf(x) !== -1;
 
 // Set up the logger with debug level if requested.
@@ -29,10 +20,19 @@ const debug = includes(process.argv, '-d') || includes(process.argv, '--debug');
 log.level = debug ? 'debug' : 'info';
 log.debug(`Initialised log with level ${log.level.cyan}`);
 
+// The path to the directory where global node modules are installed.
+const GLOBAL_NODE_ROOT = process.execPath
+  .replace(/bin\/node$/, 'lib/node_modules');
+
+// Follow links and expand parent dirs to find the package.json of this script.
+const binDir = path.dirname(fs.realpathSync(process.argv[1]));
+const packagePath = fs.realpathSync(`${binDir}/../../package.json`);
+const version = new JsonFile(packagePath).read().version;
+
 // Initialise yargs for command line parsing.
 yargs
   .usage(`Usage: $0 ${'<command>'.cyan} ${'<action>'.magenta} [options]`)
-  .version(new JsonFile(packagePath).read().version).alias('v', 'version')
+  .version(version).alias('v', 'version')
   // Merge configuration into the yargs options.
   .config('config', utils.loadConfig)
   .alias('c', 'config')
@@ -46,26 +46,30 @@ yargs
   .global('c')
   .recommendCommands();
 
-// Generate the help after everything is registered.
+// Scan for plugins that will register as yargs commands.
+new PluginScanner({
+  paths: GLOBAL_NODE_ROOT,
+  host: {version, log},
+}).loadPlugins((err, pluginModules) => {
+    if (err) {
+      log.info('Failed to load plugins');
+    } else {
+      // Register any loaded plugin modules.
+      registry.register(pluginModules);
+    }
 
-new PluginScanner(GLOBAL_NODE_ROOT).loadPlugins((err, pluginModules) => {
-  if (err) {
-    log.debug('Failed to load plugins');
-  } else {
-    // Register any loaded plugin modules.
-    registry.register(pluginModules);
-  }
+    // Register the commands of each module in the registry with yargs.
+    registry.registerAllCommands(yargs);
 
-  // Register the commands of each module in the registry with yargs.
-  registry.registerAllCommands(yargs);
+    // Generate the help after everything is registered.
+    log.debug('Generating help');
+    yargs
+      .demandCommand(1, 'Must provide a command'.red)
+      .strict()
+      .fail(utils.fail)
+      .help().alias('h', 'help');
 
-  log.debug('Generating help');
-  yargs
-    .demand(1, 'ERROR: Must provide a command\n'.red)
-    .fail(utils.fail)
-    .help('help').alias('h', 'help');
-
-  log.debug('Invoking yargs processing...');
-  yargs.argv;
-});
+    log.debug('Invoking yargs processing...');
+    yargs.argv;
+  });
 

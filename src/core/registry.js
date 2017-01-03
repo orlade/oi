@@ -2,6 +2,7 @@ import * as log from 'winston';
 import _ from 'lodash';
 import 'colors';
 
+import Module from './module';
 import {fail} from '../utils/util';
 
 /**
@@ -31,6 +32,10 @@ class Registry {
     }
 
     _.each(modules, (module) => {
+      // Ensure every registered module is an actual Module.
+      if (module.constructor.name !== 'Module') {
+        module = new Module(module);
+      }
       log.debug(`Registering ${module.name} (${module.id})...`);
       this.modules[module.id] = module;
     });
@@ -43,7 +48,7 @@ class Registry {
    * @param yargs The yargs object to register the module with.
    */
   registerCommand(yargs, module) {
-    log.debug(`Registering command module ${module.command.cyan}`);
+    log.debug(`Registering command module ${module.command.cyan}...`);
     yargs.command(module).fail(fail);
   }
 

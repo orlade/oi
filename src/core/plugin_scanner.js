@@ -40,16 +40,23 @@ const MODULE_NAME = 'oi:module';
 export default class PluginScanner {
 
   /**
+   * Configuration options for the plugin scanner.
+   *
+   * @typedef {Object} Config
+   * @property {string[]} paths Optional set of paths to search for plugins in
+   * addition to the js-plugin defaults.
+   * @property {object} host An object to inject as the host value into all
+   * plugin factory methods.
+   */
+
+  /**
    * Creates a new plugin scanner.
    *
-   * @param {?Array.<string>} paths Optional set of paths to search for plugins
-   * in addition to the js-plugin defaults.
+   * @param {Config} options Configuration options for the plugin scanner.
    */
-  constructor(paths = []) {
-    if (paths && !_.isArray(paths)) {
-      paths = [paths];
-    }
-    this.paths = paths;
+  constructor(options = {paths: [], host: {}}) {
+    options.paths = _.castArray(options.paths || []);
+    _.merge(this, options);
   }
 
   /**
@@ -65,7 +72,8 @@ export default class PluginScanner {
     scanPluginSubdirs(this.paths);
     pluginManager.scan();
     const options = {multi: true, onerror: this.onError};
-    pluginManager.connect({}, MODULE_NAME, options, (err, plugins, names) => {
+    const host = {log};
+    pluginManager.connect(host, MODULE_NAME, options, (err, plugins, names) => {
       if (err) {
         log.error(err);
         callback(err, null);
