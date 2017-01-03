@@ -1,5 +1,4 @@
-import fs from 'fs';
-import touch from 'touch';
+import fs from 'fs-extra';
 import * as log from 'winston';
 import 'colors';
 
@@ -21,14 +20,6 @@ export default class JsonFile {
   }
 
   /**
-   * Touches the JSON file, creating it if it doesn't exist.
-   */
-  touch() {
-    log.debug(`Touching file ${this.path.magenta}...`);
-    touch.sync(this.path);
-  }
-
-  /**
    * Reads and returns the content of the JSON file.
    * @return {{}} The content of the JSON file as a JS object.
    */
@@ -36,7 +27,7 @@ export default class JsonFile {
     log.debug(`Reading file ${this.path.magenta}...`);
     try {
       // Ensure the file exists.
-      this.touch();
+      fs.ensureFileSync(this.path);
       const content = fs.readFileSync(this.path, 'utf-8');
       const json = content ? JSON.parse(content) : {};
       log.debug(`Contents of ${this.path.magenta}:\n${JSON.stringify(json)}`);

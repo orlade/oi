@@ -1,10 +1,25 @@
 # Oi
 
-[![Build Status](https://travis-ci.org/orlade/oi.svg?branch=develop)](https://travis-ci.org/orlade/oi)
-[![Coverage Status](https://coveralls.io/repos/github/orlade/oi/badge.svg?branch=develop)](https://coveralls.io/github/orlade/oi?branch=develop)
-[![NPM Version](https://img.shields.io/npm/v/@oi/oi.svg)](https://www.npmjs.com/package/@oi/oi)
+[![Build Status][travis-img]][travis-url]
+[![Coverage Status][cover-img]][cover-url]
+[![NPM Version][npm-img]][npm-url]
 
 A CLI tool for automating development tasks.
+
+## Getting Started
+
+To install Oi:
+
+    npm install -g @oi/oi
+    oi -h
+
+As an example of an Oi plugin, you can install [Oi's own development plugin][oi-oi]:
+
+    npm install -g @oi/oi-oi
+    oi oi -h
+
+Note that if you are using `nvm`, global plugins will need to be installed using the same NVM you
+intended to run them with.
 
 ## Structure
 
@@ -42,8 +57,19 @@ to a file that should be `require`d.
 
 ### Oi Plugin Examples
 
- - [`oi-oi`](https://github.com/orlade/oi-oi): CLI for development tasks on Oi itself.
- - [`oi-sysl`](https://github.com/orlade/oi-sysl): CLI for running
-   [Sysl](https://github.com/ANZ-bank/Sysl) tasks.
+ - [`oi-oi`][oi-oi]: CLI for development tasks on Oi itself.
+ - [`oi-sysl`][oi-sysl]: CLI for running
+   [Sysl][sysl] tasks.
+
+
+[travis-img]: https://travis-ci.org/orlade/oi.svg?branch=develop
+[travis-url]: https://travis-ci.org/orlade/oi
+[cover-img]: https://coveralls.io/repos/github/orlade/oi/badge.svg?branch=develop
+[cover-url]: https://coveralls.io/github/orlade/oi?branch=develop
+[npm-img]: https://img.shields.io/npm/v/@oi/oi.svg
+[npm-url]: https://www.npmjs.com/package/@oi/oi
 
 [jsp]: https://github.com/easeway/js-plugins
+[oi-oi]: https://github.com/orlade/oi-oi
+[oi-sysl]: https://github.com/orlade/oi-sysl
+[sysl]: https://github.com/ANZ-bank/Sysl
