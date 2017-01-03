@@ -25,7 +25,7 @@
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "watch": "watch 'npm run build && npm test' ./src ./test",
     "release": "standard-version",
-    "push": "git push --follow-tags origin master && npm publish"
+    "push": "git push --follow-tags origin && npm publish"
   },
   "dependencies": {
     "colors": "^1.1.2",
