@@ -1,19 +1,13 @@
 /* global describe, it */
 
-import {exec} from '../../../src/utils/util'
+import {exec} from '../../../src/utils/util';
+import assert from 'assert';
 
 describe("Oi CLI", () => {
 
-  it("can be invoked", (done) => {
-    exec('node dist/bin/oi.js -v', {}, (code, output) => {
-      if (code !== 0) {
-        done(Error("Invalid exit code"))
-      } else if (!output.match(/\d+\.\d+\.\d+/)) {
-        done(Error("Invalid version output"))
-      } else {
-        done();
-      }
-    });
+  it("can be invoked", () => {
+    const result = exec('node dist/bin/oi.js -v');
+    assert(result.stdout.trim().match(/\d+\.\d+\.\d+/), "Invalid version output");
   });
 
 });
