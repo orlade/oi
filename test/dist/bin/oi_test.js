@@ -6,7 +6,7 @@ require('chai').should();
 
 describe("Oi CLI", () => {
 
-  it("can be invoked", () => {
+  it("can be invoked", (done) => {
     const result = exec('node dist/bin/oi.js -v');
     console.log(result);
     console.log(result.toString());
@@ -16,8 +16,10 @@ describe("Oi CLI", () => {
     console.log(result.stdout.trim().match(/^\d+\.\d+\.\d+$/));
     try {
       result.stdout.trim().should.match(/^\d+\.\d+\.\d+$/);
+      done();
     } catch (e) {
       console.error('ERROR:', e);
+      done(e);
       throw Error('FAIL');
     }
   });
