@@ -7,6 +7,7 @@ describe("Oi CLI", () => {
 
   it("can be invoked", () => {
     const result = exec('node dist/bin/oi.js -v');
+    console.log(result);
     assert(result.stdout.trim().match(/\d+\.\d+\.\d+/), "Invalid version output");
   });
 
