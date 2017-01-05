@@ -6,22 +6,11 @@ require('chai').should();
 
 describe("Oi CLI", () => {
 
-  it("can be invoked", (done) => {
+  it("can be invoked", function() {
+    this.timeout(10000);
     const result = exec('node dist/bin/oi.js -v');
-    console.log(result);
-    console.log(result.toString());
-    console.log(result.code);
-    console.log(result.stdout);
-    console.log(result.stdout.trim());
-    console.log(result.stdout.trim().match(/^\d+\.\d+\.\d+$/));
-    try {
-      result.toString().trim().should.match(/^\d+\.\d+\.\d+$/);
-      done();
-    } catch (e) {
-      console.error('ERROR:', e);
-      done(e);
-      throw Error('FAIL');
-    }
+    result.code.should.equal(0);
+    result.toString().trim().should.match(/^\d+\.\d+\.\d+$/);
   });
 
 });
