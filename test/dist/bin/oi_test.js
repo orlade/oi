@@ -14,7 +14,12 @@ describe("Oi CLI", () => {
     console.log(result.stdout);
     console.log(result.stdout.trim());
     console.log(result.stdout.trim().match(/^\d+\.\d+\.\d+$/));
-    result.stdout.trim().should.match(/^\d+\.\d+\.\d+$/);
+    try {
+      result.stdout.trim().should.match(/^\d+\.\d+\.\d+$/);
+    } catch (e) {
+      console.error('ERROR:', e);
+      throw Error('FAIL');
+    }
   });
 
 });
