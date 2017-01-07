@@ -3,7 +3,6 @@ import _ from 'lodash';
 import 'colors';
 
 import Module from './module';
-import {fail} from '../utils/util';
 
 /**
  * Stores the modules that have been registered and registers them with yargs.
@@ -49,7 +48,7 @@ class Registry {
    */
   registerCommand(yargs, module) {
     log.debug(`Registering command module ${module.command.cyan}...`);
-    yargs.command(module).fail(fail);
+    yargs.command(module);
   }
 
   /**

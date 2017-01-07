@@ -44,7 +44,7 @@ yargs
   })
   .global('d')
   .global('c')
-  .recommendCommands();
+  .option('completion');
 
 // Scan for plugins that will register as yargs commands.
 new PluginScanner({
@@ -67,7 +67,8 @@ new PluginScanner({
       .demandCommand(1, 'Must provide a command'.red)
       .strict()
       .fail(utils.fail)
-      .help().alias('h', 'help');
+      .help().alias('h', 'help')
+      .completion();
 
     log.debug('Invoking yargs processing...');
     yargs.argv;
