@@ -31,7 +31,7 @@
     "colors": "^1.1.2",
     "expand-home-dir": "0.0.3",
     "fs-extra": "^1.0.0",
-    "js-plugins": "0.0.3",
+    "js-plugins": "1.0.0",
     "lodash": "^4.17.2",
     "moment": "2.17.1",
     "require-dir": "^0.3.0",
