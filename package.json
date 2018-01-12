@@ -35,7 +35,7 @@
     "lodash": "^4.17.2",
     "moment": "2.17.1",
     "require-dir": "^0.3.0",
-    "shelljs": "^0.7.5",
+    "shelljs": "^0.8.0",
     "universal-mixin": "^2.0.0",
     "winston": "^2.3.0",
     "yargs": "^6.6.0"
