@@ -21,8 +21,7 @@ log.level = debug ? 'debug' : 'info';
 log.debug(`Initialised log with level ${log.level.cyan}`);
 
 // The path to the directory where global node modules are installed.
-const GLOBAL_NODE_ROOT = process.execPath
-  .replace(/bin\/node$/, 'lib/node_modules');
+const GLOBAL_NODE_ROOT = path.join(process.config.variables.node_prefix, 'lib/node_modules');
 
 // Follow links and expand parent dirs to find the package.json of this script.
 const binDir = path.dirname(fs.realpathSync(process.argv[1]));
@@ -49,28 +48,28 @@ yargs
 // Scan for plugins that will register as yargs commands.
 new PluginScanner({
   paths: GLOBAL_NODE_ROOT,
-  host: {version, log},
+  host: { version, log },
 }).loadPlugins((err, pluginModules) => {
-    if (err) {
-      log.info('Failed to load plugins');
-    } else {
-      // Register any loaded plugin modules.
-      registry.register(pluginModules);
-    }
+  if (err) {
+    log.info('Failed to load plugins');
+  } else {
+    // Register any loaded plugin modules.
+    registry.register(pluginModules);
+  }
 
-    // Register the commands of each module in the registry with yargs.
-    registry.registerAllCommands(yargs);
+  // Register the commands of each module in the registry with yargs.
+  registry.registerAllCommands(yargs);
 
-    // Generate the help after everything is registered.
-    log.debug('Generating help');
-    yargs
-      .demandCommand(1, 'Must provide a command'.red)
-      .strict()
-      .fail(utils.fail)
-      .help().alias('h', 'help')
-      .completion();
+  // Generate the help after everything is registered.
+  log.debug('Generating help');
+  yargs
+    .demandCommand(1, 'Must provide a command'.red)
+    .strict()
+    .fail(utils.fail)
+    .help().alias('h', 'help')
+    .completion();
 
-    log.debug('Invoking yargs processing...');
-    yargs.argv;
-  });
+  log.debug('Invoking yargs processing...');
+  yargs.argv;
+});
 

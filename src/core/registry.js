@@ -52,6 +52,16 @@ class Registry {
   }
 
   /**
+   * Creates a yargs command for each module in the registry.
+   *
+   * @param {object} yargs The yargs instance to register the commands with.
+   */
+  registerAllCommands(yargs) {
+    log.debug(`Registering all ${_.size(this.modules)} modules...`);
+    _.each(this.modules, this.registerCommand.bind(this, yargs));
+  }
+
+  /**
    * Combines the local argv of a command with whatever global (i.e. parent)
    * argv has been stored.
    *
@@ -61,16 +71,6 @@ class Registry {
    */
   _combineArgvs(argv) {
     return _.merge({}, this.globalArgv, argv);
-  }
-
-  /**
-   * Creates a yargs command for each module in the registry.
-   *
-   * @param {object} yargs The yargs instance to register the commands with.
-   */
-  registerAllCommands(yargs) {
-    log.debug(`Registering all ${_.size(this.modules)} modules...`);
-    _.each(this.modules, this.registerCommand.bind(this, yargs));
   }
 
   /**
