@@ -1,6 +1,6 @@
 import 'colors';
 import registry from './registry';
-import * as log from 'winston';
+import log from './logger';
 import _ from 'lodash';
 import moment from 'moment';
 import {reportResult, getAllPublicPropertyNames, expandHome}
@@ -17,7 +17,6 @@ const PLACEHOLDER_REGEX = /\$\{([^}]+)\}/g;
  * Oi to list the available actions.
  */
 export default class Module {
-
   /**
    * Creates a new module.
    *
@@ -59,8 +58,8 @@ export default class Module {
       if (!methodNames.length) {
         throw Error('No actions, handler or methods to use as subcommands');
       }
-      log.debug(`No actions or handler, binding ${methodNames.length} `
-        + `methods as subcommands (${methodNames.join(', ')})...`);
+      log.debug(`No actions or handler, binding ${methodNames.length} ` +
+        `methods as subcommands (${methodNames.join(', ')})...`);
       this.actions = _.zipObject(methodNames, methodNames.map((command) => ({
         command,
         describe: `Performs ${command}`,
@@ -92,10 +91,10 @@ export default class Module {
     }
 
     const newValue = expandHome(
-      value.replace(PLACEHOLDER_REGEX, (_, key) => options[key]));
+        value.replace(PLACEHOLDER_REGEX, (_, key) => options[key]));
     if (newValue !== value) {
-      log.debug(`Substituting ${this.command} config ${key.cyan}: `
-        + `${value} => ${newValue}`);
+      log.debug(`Substituting ${this.command} config ${key.cyan}: ` +
+        `${value} => ${newValue}`);
     }
     return newValue;
   }
@@ -113,8 +112,8 @@ export default class Module {
     return (name, options) => {
       const substitute = (value, key) => this._substituteConfig(options, key);
       options = _.merge(
-        _.mapValues(options, substitute),
-        _.mapValues(this.config, substitute)
+          _.mapValues(options, substitute),
+          _.mapValues(this.config, substitute)
       );
       return handler.call(this, name, options);
     };
@@ -123,8 +122,8 @@ export default class Module {
   /**
    * Yargs builder function.
    *
-   * @param yargs
-   * @param {Object[]} actions Optional list of actions. Defaults to
+   * @param {object} yargs The Yargs object.
+   * @param {object[]} actions Optional list of actions. Defaults to
    * this.actions.
    * @protected
    */
@@ -138,18 +137,19 @@ export default class Module {
   /**
    * Creates a Module for a subcommand of this module.
    *
-   * @param {string} subcommand
+   * @param {string} subcommand The action of the new module.
+   * @return {object} the new Module.
    * @protected
    */
   _buildSubmodule(subcommand) {
     return new Module(_.merge({
-        command: subcommand,
-        parent: this,
-        config: this.config,
-        requireConfig: this.requireConfig,
-        requireTools: this.requireTools,
-      },
-      this.actions[subcommand]
+      command: subcommand,
+      parent: this,
+      config: this.config,
+      requireConfig: this.requireConfig,
+      requireTools: this.requireTools,
+    },
+    this.actions[subcommand]
     ));
   }
 
@@ -166,8 +166,8 @@ export default class Module {
   _invoke(methodName, argv) {
     const [, ...args] = argv._;
     const kwargs = _.pickBy(argv, (p) => p !== '_');
-    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} `
-      + `with args ${args}, ${JSON.stringify(kwargs)}...`);
+    log.debug(`Invoking ${methodName.magenta} on ${this.id.cyan} ` +
+      `with args ${args}, ${JSON.stringify(kwargs)}...`);
     return this.runTask(methodName, args.concat([kwargs]));
   }
 
@@ -175,8 +175,8 @@ export default class Module {
    * Hook that runs before a task method is run when invoked through the runTask
    * method.
    *
-   * @param task The name of the task being run.
-   * @param args The arguments to be passed to the method.
+   * @param {string} task The name of the task being run.
+   * @param {object} args The arguments to be passed to the method.
    */
   beforeTask(task, args) {
     this.startTime = moment();
@@ -188,7 +188,7 @@ export default class Module {
    *
    * @param {string|function} task The task to run.
    * @param {?Array.<object>} args The arguments to apply to the task.
-   * @returns {object} The result of running the task.
+   * @return {object} The result of running the task.
    */
   runTask(task, args) {
     if (this.beforeTask(task, args)) {
@@ -205,8 +205,8 @@ export default class Module {
    * Hook that runs after the completion of a task run through the runTask
    * method.
    *
-   * @param task The name of the task that just finished running.
-   * @param result The output of the completed task.
+   * @param {string} task The name of the task that just finished running.
+   * @param {object} result The output of the completed task.
    * @return {*} Some output object that can be used to determine the success of
    * the task.
    */
@@ -219,6 +219,7 @@ export default class Module {
    *
    * @param {string} task The name of the task being run.
    * @param {object} result The result object from <code>shelljs.exec</code>.
+   * @return {object} The result that was passed in.
    * @protected
    */
   _report(task, result) {
@@ -236,5 +237,4 @@ export default class Module {
   register() {
     registry.register(this);
   }
-
 }

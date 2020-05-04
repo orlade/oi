@@ -3,7 +3,7 @@
 import {exec as _exec, env, pwd, cd} from 'shelljs';
 import {spawn} from 'child_process';
 import expandHomeDir from 'expand-home-dir';
-import * as log from 'winston';
+import log from '../core/logger';
 import _ from 'lodash';
 import 'colors';
 import mixin from 'universal-mixin';
@@ -30,7 +30,7 @@ import JsonFile from './json_file';
  * parent process to exit.
  * @param {?execCallback} callback A callback to invoke when an asynchronous
  * (attached) process exits.
- * @returns {string} The result of the execution.
+ * @return {string} The result of the execution.
  */
 export function exec(command, options = {}, callback = null) {
   const execDir = expandHome(options.workingDir) || pwd();
@@ -66,11 +66,11 @@ export function exec(command, options = {}, callback = null) {
   if (result) {
     if (result.code) {
       log.error(`Command`.red, command.cyan,
-        `exited with code ${result.code}`.red);
+          `exited with code ${result.code}`.red);
       log.error(result.output);
     } else if (/warning\:?\]?/i.test(result.output)) {
       log.warn(`Command`.yellow, command.cyan,
-        `completed with warnings`.yellow);
+          `completed with warnings`.yellow);
     }
   }
   return result;
@@ -83,7 +83,7 @@ export function exec(command, options = {}, callback = null) {
  * @param {?string} workingDir The directory to be in when executing the
  * function. If not provided, the function will be invoked in the current
  * directory.
- * @returns {*} The result of invoking the function.
+ * @return {*} The result of invoking the function.
  */
 function invokeIn(func, workingDir) {
   const currentDir = process.cwd();
@@ -105,7 +105,7 @@ function invokeIn(func, workingDir) {
  *
  * @param {Array.<object>} items The array of items to join.
  * @param {?string} color The color to apply to each item in the output string.
- * @returns {string} A string of the combined items.
+ * @return {string} A string of the combined items.
  */
 export function commafy(items, color) {
   if (color) {
@@ -121,7 +121,7 @@ export function commafy(items, color) {
  * just whitespace.
  *
  * @param {string} string The output string to convert.
- * @returns {?Array<string>} An array of the lines of output, or null if there
+ * @return {?Array<string>} An array of the lines of output, or null if there
  * is no output.
  */
 export function arrayifyOutput(string) {
@@ -136,9 +136,11 @@ export function arrayifyOutput(string) {
  * Substitutes any environment variables in string with values in the
  * environment.
  *
- * @param string The string in which to replace environment variable references.
- * @param extraEnv An optional map of additional environment variables to merge
- * into the current environment.
+ * @param {string} string The string in which to replace environment variable
+ * references.
+ * @param {object} extraEnv An optional map of additional environment variables
+ * to merge into the current environment.
+ * @return {string} The input string with env vars replaced with their values.
  */
 export function substituteEnv(string, extraEnv = {}) {
   const allEnv = _.merge({}, env, extraEnv);
@@ -168,17 +170,17 @@ export function reportResult(task, result, time, {info = false} = {}) {
  * Returns true if the result indicates a success, or false otherwise.
  *
  * @param {object} result The output of running a task.
- * @returns {boolean} True if successful, false otherwise.
+ * @return {boolean} True if successful, false otherwise.
  */
 export function determineSuccess(result) {
-  return !(result === false
-  || (result != null && typeof result === 'object' && result.code));
+  return !(result === false ||
+    (result != null && typeof result === 'object' && result.code));
 }
 
 /**
  * Expands any home directory reference in a path.
- * @param path The path to expand ~s within.
- * @returns {string} The expanded path.
+ * @param {string} path The path to expand ~s within.
+ * @return {string} The expanded path.
  */
 export function expandHome(path) {
   if (!path || typeof path !== 'string') return path;
@@ -193,7 +195,7 @@ export function expandHome(path) {
  */
 export function loadConfig(path) {
   log.debug(`Reading config from ${path.magenta}...`);
-  let config = new JsonFile(path).read();
+  const config = new JsonFile(path).read();
   // TODO(ladeo): Refactor to be more generic.
   if (config.baseDir) {
     config.baseDir = expandHome(config.baseDir);
@@ -206,6 +208,7 @@ export function loadConfig(path) {
  * yargs.
  *
  * @param {object} yargs The yargs object from which to handle errors.
+ * @return {Function} A function to handle errors from Yargs.
  */
 export function handleYargsError(yargs) {
   /**
@@ -225,9 +228,9 @@ export function handleYargsError(yargs) {
 /**
  * Standard error for yargs commands.
  *
- * @param msg The error message describing the failure.
- * @param err The JS error object, if one was thrown.
- * @param yargs The yargs instance.
+ * @param {string} msg The error message describing the failure.
+ * @param {object} err The JS error object, if one was thrown.
+ * @param {object} yargs The yargs instance.
  */
 export function fail(msg, err, yargs) {
   // Rethrow errors to preserve the stack trace (but make it red).
@@ -238,7 +241,7 @@ export function fail(msg, err, yargs) {
   yargs.showHelp();
   console.error(`ERROR: ${msg}`.red);
   if (require('winston').level == 'debug') {
-    let stack = new Error().stack;
+    const stack = new Error().stack;
     console.error(stack.substr(stack.indexOf('\n') + 1).red);
   }
   process.exit(1);
@@ -248,8 +251,8 @@ export function fail(msg, err, yargs) {
  * Gets the names of all properties, both enumerable and non-enumerable, own and
  * inherited, of the object.
  *
- * @param obj
- * @returns {string[]}
+ * @param {object} obj The object to read the properties of.
+ * @return {string[]} The names of the properties.
  */
 export function getAllPropertyNames(obj) {
   let props = [];
@@ -264,8 +267,8 @@ export function getAllPropertyNames(obj) {
  * Gets the names of all properties, both enumerable and non-enumerable, own and
  * inherited, that don't begin with an underscore.
  *
- * @param obj
- * @returns {string[]}
+ * @param {object} obj The object to read public property names from.
+ * @return {string[]} The names of the public properties.
  */
 export function getAllPublicPropertyNames(obj) {
   const BASE_NAMES = _.zipObject(Object.getOwnPropertyNames(Object.prototype));
@@ -290,7 +293,7 @@ export function getAllPublicPropertyNames(obj) {
  * @param {object} obj The object to get the unique property names of.
  * @param {?object} other The object to compare the input's properties to to
  * determine uniqueness.
- * @returns {string[]}
+ * @return {string[]}
  */
 export function getAllUniquePropertyNames(obj, other) {
   const otherNames = _.zipObject(getAllPropertyNames(other));
@@ -301,18 +304,18 @@ export function getAllUniquePropertyNames(obj, other) {
  * Creates a mixin function from a class.
  *
  * @param {object} SourceClass The class to turn into a mixin function.
- * @returns {Function} The class as a mixin function.
+ * @return {Function} The class as a mixin function.
  */
 export function mixinClass(SourceClass) {
   return function(options = {}) {
     options.skipInit = true;
     const obj = new SourceClass(options);
-    let behavior = {};
+    const behavior = {};
     const uniqueNames = getAllUniquePropertyNames(obj, {});
     _.each(uniqueNames, (key) => behavior[key] = obj[key]);
     return function(target) {
-      log.debug(`Mixing behaviour of ${SourceClass.name} `
-        + `into ${target.name}...`);
+      log.debug(`Mixing behaviour of ${SourceClass.name} ` +
+        `into ${target.name}...`);
       return mixin(behavior)(target);
     };
   };

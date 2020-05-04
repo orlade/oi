@@ -1,5 +1,5 @@
 import fs from 'fs-extra';
-import * as log from 'winston';
+import log from '../core/logger';
 import 'colors';
 
 import {expandHome} from './util';
@@ -8,7 +8,6 @@ import {expandHome} from './util';
  * Exposes functions for working with a JSON file.
  */
 export default class JsonFile {
-
   /**
    * Creates a new JsonFile object, without loading the content of the
    * underlying file.
@@ -46,16 +45,15 @@ export default class JsonFile {
    */
   append(key, value) {
     log.debug(`Appending {"${key}": "${value}"} to ${this.path.magenta}...`);
-    let json = this.read();
+    const json = this.read();
     json[key] = value;
     fs.writeFile(this.path, JSON.stringify(json), (err) => {
       if (err) {
         log.error(`Failed to write file ${this.path.magenta}`, err);
       } else {
-        log.debug(`Updated file ${this.path.magenta} to:\n`
-          + JSON.stringify(json, null, 2));
+        log.debug(`Updated file ${this.path.magenta} to:\n` +
+          JSON.stringify(json, null, 2));
       }
     });
   }
-
 }

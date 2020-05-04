@@ -1,5 +1,5 @@
-import * as log from 'winston';
 import _ from 'lodash';
+import log from './logger';
 import 'colors';
 
 import Module from './module';
@@ -8,7 +8,6 @@ import Module from './module';
  * Stores the modules that have been registered and registers them with yargs.
  */
 class Registry {
-
   /**
    * Creates a new registry.
    */
@@ -43,8 +42,8 @@ class Registry {
   /**
    * Registers a module with yargs as a command.
    *
-   * @param module The module to register as a command.
-   * @param yargs The yargs object to register the module with.
+   * @param {object} yargs The yargs object to register the module with.
+   * @param {object} module The module to register as a command.
    */
   registerCommand(yargs, module) {
     log.debug(`Registering command module ${module.command.cyan}...`);
@@ -66,7 +65,7 @@ class Registry {
    * argv has been stored.
    *
    * @param {?object} argv The local argv output of a child command.
-   * @returns {object} The merged argv object.
+   * @return {object} The merged argv object.
    * @protected
    */
   _combineArgvs(argv) {
@@ -90,7 +89,6 @@ class Registry {
   get moduleIds() {
     return _.keys(this.modules);
   }
-
 }
 
 // Singleton instance returned for every import.

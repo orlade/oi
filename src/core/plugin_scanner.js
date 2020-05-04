@@ -1,7 +1,7 @@
 import path from 'path';
 import PluginManager from 'js-plugins';
 import _ from 'lodash';
-import * as log from 'winston';
+import log from './logger';
 
 const pluginManager = new PluginManager();
 
@@ -11,7 +11,8 @@ const pluginManager = new PluginManager();
  * them and avoid naming conflicts. As such they will be installed into an @oi
  * subdir of their target directory.
  *
- * @param extraPaths The paths to search in addition to the js-plugins defaults.
+ * @param {string[]} extraPaths The paths to search in addition to the
+ * js-plugins defaults.
  */
 function scanPluginSubdirs(extraPaths) {
   const originalScanSubdirs = pluginManager.scanSubdirs.bind(pluginManager);
@@ -38,7 +39,6 @@ const MODULE_NAME = 'oi:module';
  * Scans for Oi plugins and loads modules from them to be registered.
  */
 export default class PluginScanner {
-
   /**
    * Configuration options for the plugin scanner.
    *
@@ -82,8 +82,8 @@ export default class PluginScanner {
       if (names && names.length) {
         log.debug(`Discovered plugins: [${names.join(', ')}]`);
         this.modules = plugins.map(this.plugModule);
-        log.debug(`Created plugin modules: `
-          + `[${this.modules.map((m) => m.id).join(', ')}]`);
+        log.debug(`Created plugin modules: ` +
+          `[${this.modules.map((m) => m.id).join(', ')}]`);
         callback(null, this.modules);
       } else {
         log.debug('No plugins discovered');
@@ -109,11 +109,10 @@ export default class PluginScanner {
    * plugin export into a module.
    *
    * @param {{}} loadedPlugin The exported object of a plugin.
-   * @returns {{}} The module retrieved from the plugin output.
+   * @return {{}} The module retrieved from the plugin output.
    */
   plugModule(loadedPlugin) {
     // Currently all plugins are modules, so this is redundant.
     return loadedPlugin;
   }
-
 }
