@@ -21,7 +21,7 @@ log.debug(`Initialised log with level ${log.level.cyan}`);
 
 // The path to the directory where global node modules are installed.
 const GLOBAL_NODE_ROOT =
-    path.join(process.config.variables.node_prefix, 'lib/node_modules');
+    process.execPath.replace('bin/node', 'lib/node_modules');
 
 // Follow links and expand parent dirs to find the package.json of this script.
 const binDir = path.dirname(fs.realpathSync(process.argv[1]));
@@ -72,4 +72,3 @@ new PluginScanner({
   log.debug('Invoking yargs processing...');
   yargs.argv;
 });
-
